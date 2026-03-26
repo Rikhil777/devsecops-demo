@@ -1,49 +1,8 @@
-name: DevSecOps Pipeline
-
-on: [push]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    # ✅ SAST - CodeQL
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
-      with:
-        languages: python
-
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
-
-    # ✅ Docker Build
-    - name: Build Docker Image
-      run: docker build -t devsecops-app .
-
-    # ✅ Container Security - Trivy
-    - name: Scan with Trivy
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: devsecops-app
-        severity: HIGH,CRITICAL
-        format: table
-
-    # ✅ Start App for DAST
+# ✅ Start App for DAST
     - name: Start App
       run: |
         docker run -d -p 5000:5000 devsecops-app
-        sleep 15
+        sleep 10
 
     # ✅ DAST - OWASP ZAP
     - name: OWASP ZAP Scan
@@ -51,3 +10,28 @@ jobs:
       with:
         target: 'http://localhost:5000'
         cmd_options: '-I'
+```
+
+⚠️ **Important:** Make sure indentation matches — each `- name:` should align with the other steps above it.
+
+---
+
+## After Committing
+
+1. Go to **Actions** tab
+2. Click the new running workflow
+3. Wait for it to complete
+4. Take screenshot of the **ZAP scan step** in the logs
+
+---
+
+## ⚠️ One Thing to Check
+
+The Docker image `devsecops-app` must be **built before** this step. Your pipeline order should be:
+```
+1. Checkout code
+2. CodeQL (SAST)
+3. Docker Build        ← must come before ZAP
+4. Trivy Scan
+5. Start App           ← new step
+6. OWASP ZAP Scan      ← new step

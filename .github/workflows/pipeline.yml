@@ -15,7 +15,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # ✅ SAST - CodeQL
+    # SAST - CodeQL
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
       with:
@@ -27,41 +27,27 @@ jobs:
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
 
-    # ✅ Docker Build
+    # Docker Build
     - name: Build Docker Image
       run: docker build -t devsecops-app .
 
-    # ✅ Container Security - Trivy
+    # Container Security - Trivy
     - name: Scan with Trivy
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: devsecops-app# ✅ Start App for DAST
-    - name: Start App
-      run: |
-        docker run -d -p 5000:5000 devsecops-app
-        sleep 10
+        image-ref: devsecops-app
+        severity: HIGH,CRITICAL
+        format: table
 
-    # ✅ DAST - OWASP ZAP
-    - name: OWASP ZAP Scan
-      uses: zaproxy/action-baseline@v0.10.0
-      with:
-        target: 'http://localhost:5000'
-        cmd_options: '-I'
-
-
-
-    # ✅ Start App for DAST
+    # Start App for DAST
     - name: Start App
       run: |
         docker run -d -p 5000:5000 devsecops-app
         sleep 15
 
-    # ✅ DAST - OWASP ZAP
+    # DAST - OWASP ZAP
     - name: OWASP ZAP Scan
       uses: zaproxy/action-baseline@v0.10.0
       with:
         target: 'http://localhost:5000'
         cmd_options: '-I'
-
-
-        
